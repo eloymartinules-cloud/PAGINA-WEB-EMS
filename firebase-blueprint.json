@@ -1,0 +1,68 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID" },
+        "displayName": { "type": "string", "description": "User's full name" },
+        "email": { "type": "string", "description": "User's email address" },
+        "photoURL": { "type": "string", "description": "User's profile picture URL" },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User's role" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user account was created" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Property": {
+      "title": "Property",
+      "description": "Real estate property listing",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Property ID" },
+        "title": { "type": "string", "description": "Listing title" },
+        "description": { "type": "string", "description": "Property description" },
+        "price": { "type": "number", "description": "Property price" },
+        "location": { "type": "string", "description": "Property location/address" },
+        "type": { "type": "string", "enum": ["sale", "rent"], "description": "Transaction type" },
+        "category": { "type": "string", "enum": ["piso", "casa", "atico", "duplex"], "description": "Property category" },
+        "bedrooms": { "type": "integer", "description": "Number of bedrooms" },
+        "bathrooms": { "type": "integer", "description": "Number of bathrooms" },
+        "area": { "type": "number", "description": "Property area in square meters" },
+        "imageUrl": { "type": "string", "description": "URL of property image" },
+        "featured": { "type": "boolean", "description": "Whether the property is featured" },
+        "status": { "type": "string", "enum": ["available", "sold", "rented"], "description": "Listing status" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the listing was created" }
+      },
+      "required": ["title", "price", "location", "type", "category"]
+    },
+    "Valuation": {
+      "title": "Valuation",
+      "description": "Online property valuation request and result",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Valuation ID" },
+        "userId": { "type": "string", "description": "ID of the user who requested the valuation" },
+        "propertyDetails": { "type": "string", "description": "Details provided by the user about the property" },
+        "estimatedValue": { "type": "number", "description": "AI estimated value" },
+        "aiAnalysis": { "type": "string", "description": "AI analysis and reasoning" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the valuation was requested" }
+      },
+      "required": ["userId", "propertyDetails", "estimatedValue"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/properties/{propertyId}": {
+      "schema": "Property",
+      "description": "Real estate listings"
+    },
+    "/valuations/{valuationId}": {
+      "schema": "Valuation",
+      "description": "Property valuations"
+    }
+  }
+}

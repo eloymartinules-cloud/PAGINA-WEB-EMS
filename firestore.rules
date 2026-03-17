@@ -1,0 +1,94 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: properties
+// Fields:
+//   - title: string (required)
+//   - description: string (required)
+//   - price: number (required)
+//   - location: string (required)
+//   - bedrooms: number (required)
+//   - bathrooms: number (required)
+//   - area: number (required)
+//   - imageUrl: string (required)
+//   - type: string (sale/rent)
+//   - createdAt: timestamp
+//
+// Collection: valuations
+// Fields:
+//   - name: string (required)
+//   - email: string (required, format: email)
+//   - phone: string (optional)
+//   - address: string (required)
+//   - propertyType: string (required)
+//   - area: number (required)
+//   - bedrooms: number (required)
+//   - estimatedValue: number (required)
+//   - createdAt: timestamp
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "eloy.marti.nules@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidProperty(data) {
+      return data.keys().hasAll(['title', 'price', 'location', 'imageUrl', 'type']) &&
+             data.title is string && data.title.size() < 200 &&
+             data.price is number && data.price > 0 &&
+             data.location is string && data.location.size() < 200 &&
+             data.imageUrl is string && data.imageUrl.size() < 1000 &&
+             data.type in ['sale', 'rent'];
+    }
+
+    function isValidValuation(data) {
+      return data.keys().hasAll(['name', 'email', 'address', 'area', 'estimatedValue']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             isValidEmail(data.email) &&
+             data.address is string && data.address.size() < 500 &&
+             data.area is number && data.area > 0 &&
+             data.estimatedValue is number;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /properties/{propertyId} {
+      // Publicly readable for the catalog
+      allow read: if true;
+      // Only admins can manage properties
+      allow write: if isAdmin() && isValidProperty(request.resource.data);
+    }
+
+    match /valuations/{valuationId} {
+      // Public can create valuations (leads)
+      allow create: if isValidValuation(request.resource.data);
+      // Only admins can read leads
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read, write: if request.auth.uid == userId || isAdmin();
+    }
+  }
+}
